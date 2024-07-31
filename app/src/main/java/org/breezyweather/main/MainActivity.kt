@@ -24,6 +24,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.FrameLayout
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,6 +42,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import breezyweather.domain.location.model.Location
+import com.bytedance.sdk.openadsdk.AdSlot
+import com.bytedance.sdk.openadsdk.CSJAdError
+import com.bytedance.sdk.openadsdk.CSJSplashAd
+import com.bytedance.sdk.openadsdk.TTAdNative
+import com.bytedance.sdk.openadsdk.TTAdNative.CSJSplashAdListener
+import com.bytedance.sdk.openadsdk.TTAdSdk
+import com.google.android.ads.mediationtestsuite.utils.UIUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,6 +77,7 @@ import org.breezyweather.sources.SourceManager
 import org.breezyweather.theme.compose.BreezyWeatherTheme
 import org.breezyweather.theme.compose.DayNightTheme
 import javax.inject.Inject
+import org.breezyweather.main.utils.ADUIUtils
 
 @AndroidEntryPoint
 class MainActivity : GeoActivity(),
@@ -169,7 +178,7 @@ class MainActivity : GeoActivity(),
             updateSystemBarStyle()
         }
     }
-
+    private lateinit var mSplashContainer: FrameLayout
     override fun onCreate(savedInstanceState: Bundle?) {
         val isLaunch = savedInstanceState == null
 
@@ -184,6 +193,15 @@ class MainActivity : GeoActivity(),
             fragmentsLifecycleCallback, false
         )
         setContentView(binding.root)
+
+        // 初始化 mSplashContainer
+        mSplashContainer = findViewById(R.id.splash_container)
+
+        // 初始化 SDK
+        val adNativeLoader = TTAdSdk.getAdManager().createAdNative(this)
+
+        loadSplashAd(adNativeLoader)
+
 
         MainThemeColorProvider.bind(this)
 
@@ -268,6 +286,50 @@ class MainActivity : GeoActivity(),
 
             return f?.snackbarContainer ?: super.snackbarContainer
         }
+
+    private fun loadSplashAd(adNativeLoader: TTAdNative) {
+        val adSlot = AdSlot.Builder()
+            .setCodeId("103046686")
+            .setImageAcceptedSize(200, 500) // 单位px
+            .build()
+
+        adNativeLoader.loadSplashAd(adSlot, object : TTAdNative.CSJSplashAdListener {
+            override fun onSplashRenderSuccess(csjSplashAd: CSJSplashAd) {
+                // 渲染成功后，展示广告
+                showSplashAd(csjSplashAd)
+            }
+            override fun onSplashLoadSuccess(csjSplashAd: CSJSplashAd) {
+            // 广告加载成功的逻辑
+            }
+            override fun onSplashLoadFail(csjAdError: CSJAdError) {
+                // 广告加载失败
+            }
+
+            override fun onSplashRenderFail(csjSplashAd: CSJSplashAd, csjAdError: CSJAdError) {
+                // 广告渲染失败
+            }
+        }, 3500)
+    }
+
+    private fun showSplashAd(csjSplashAd: CSJSplashAd) {
+        // 展示广告的逻辑
+        csjSplashAd.setSplashAdListener(object : CSJSplashAd.SplashAdListener {
+            override fun onSplashAdShow(csjSplashAd: CSJSplashAd) {
+            }
+
+            override fun onSplashAdClick(csjSplashAd: CSJSplashAd) {
+            }
+
+            override fun onSplashAdClose(csjSplashAd: CSJSplashAd, i: Int) {
+                // 广告关闭后，销毁广告页面
+                finish()
+            }
+        })
+        val splashView = csjSplashAd.splashView
+        ADUIUtils.removeFromParent(splashView)
+        mSplashContainer.removeAllViews()
+        mSplashContainer.addView(splashView)
+    }
 
     // init.
 

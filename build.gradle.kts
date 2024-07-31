@@ -15,6 +15,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization) apply false
 }
 
+
 subprojects {
     tasks.withType<KotlinJvmCompile> {
         kotlinOptions {

@@ -182,6 +182,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons)
     implementation(libs.navigation.compose)
+    implementation(libs.mediation.test.suite)
     lintChecks(libs.compose.lint.checks)
 
     implementation(libs.accompanist.permissions)
@@ -243,6 +244,17 @@ dependencies {
 
     // debugImplementation because LeakCanary should only run in debug builds.
     //debugImplementation(libs.leakcanary)
+
+    // 新增的依赖项
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    implementation("com.pangle.cn:mediation-sdk:6.2.1.7")
+    implementation("com.pangle.cn:mediation-test-tools:6.2.1.7") // groMore 测试工具，仅在测试阶段使用，请勿带到线上
+    implementation("com.pangle.cn:mediation-baidu-adapter:9.35.1")
+    implementation("com.pangle.cn:mediation-gdt-adapter:4.575.1445.1")
+    // Baidu 百度
+//    implementation(files("libs/Baidu_MobAds_SDK_v9.35.aar"))
+//    // gdt优量汇
+//    implementation(files("libs/GDTSDK.unionNormal.4.575.1445.aar"))
 }
 
 tasks {

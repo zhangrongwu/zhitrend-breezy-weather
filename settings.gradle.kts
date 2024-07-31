@@ -14,16 +14,18 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
-        maven(url = "https://www.jitpack.io")
+        maven { url = uri("https://www.jitpack.io") } // 现有的 JitPack 仓库
+        maven { url = uri("https://artifact.bytedance.com/repository/pangle") } // 新的 ByteDance 仓库
     }
 }
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        mavenCentral()
         google()
-        maven(url = "https://www.jitpack.io")
+        mavenCentral()
+        maven { url = uri("https://www.jitpack.io") } // 现有的 JitPack 仓库
+        maven { url = uri("https://artifact.bytedance.com/repository/pangle") } // 新的 ByteDance 仓库
     }
 }
 
