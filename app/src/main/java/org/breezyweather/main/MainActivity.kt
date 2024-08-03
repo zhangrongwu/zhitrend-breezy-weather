@@ -313,6 +313,7 @@ class MainActivity : GeoActivity(),
 
             override fun fail(code: Int, msg: String?) {
                 //初始化失败
+                Log.d("初始化失败", "Splash  UNsuccessfully."+msg)
             }
         })
     }

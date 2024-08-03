@@ -82,6 +82,7 @@
         android:networkSecurityConfig="@xml/network_security_config"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning,ManifestResource,RtlEnabled,UnusedAttribute"
         tools:targetApi="n"
+        android:usesCleartextTraffic="true"
         >
 
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
