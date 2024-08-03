@@ -78,6 +78,10 @@ import org.breezyweather.theme.compose.BreezyWeatherTheme
 import org.breezyweather.theme.compose.DayNightTheme
 import javax.inject.Inject
 import org.breezyweather.main.utils.ADUIUtils
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+
 
 @AndroidEntryPoint
 class MainActivity : GeoActivity(),
@@ -179,6 +183,7 @@ class MainActivity : GeoActivity(),
         }
     }
     private lateinit var mSplashContainer: FrameLayout
+    private lateinit var adView: AdView
     override fun onCreate(savedInstanceState: Bundle?) {
         val isLaunch = savedInstanceState == null
 
@@ -201,6 +206,13 @@ class MainActivity : GeoActivity(),
         val adNativeLoader = TTAdSdk.getAdManager().createAdNative(this)
 
         loadSplashAd(adNativeLoader)
+
+        // 初始化Mobile Ads SDK
+        MobileAds.initialize(this) { }
+        // 初始化广告视图
+        adView = findViewById(R.id.adView)
+        val adRequest = AdRequest.Builder().build()
+        adView.loadAd(adRequest)
 
 
         MainThemeColorProvider.bind(this)

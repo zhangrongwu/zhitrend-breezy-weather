@@ -244,7 +244,6 @@ dependencies {
 
     // debugImplementation because LeakCanary should only run in debug builds.
     //debugImplementation(libs.leakcanary)
-
     // 新增的依赖项
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     implementation("com.pangle.cn:mediation-sdk:6.2.1.7")
@@ -255,6 +254,9 @@ dependencies {
 //    implementation(files("libs/Baidu_MobAds_SDK_v9.35.aar"))
 //    // gdt优量汇
 //    implementation(files("libs/GDTSDK.unionNormal.4.575.1445.aar"))
+
+    implementation("com.google.android.gms:play-services-ads:20.5.0") // 请检查最新版本
+
 }
 
 tasks {
