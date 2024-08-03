@@ -48,6 +48,7 @@ import com.bytedance.sdk.openadsdk.CSJSplashAd
 import com.bytedance.sdk.openadsdk.TTAdNative
 import com.bytedance.sdk.openadsdk.TTAdNative.CSJSplashAdListener
 import com.bytedance.sdk.openadsdk.TTAdSdk
+import com.bytedance.sdk.openadsdk.TTAdConfig
 import com.google.android.ads.mediationtestsuite.utils.UIUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
@@ -81,8 +82,10 @@ import org.breezyweather.main.utils.ADUIUtils
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
-
-
+import android.util.Log
+import android.content.Context
+import com.bytedance.sdk.openadsdk.TTCustomController
+//import com.bytedance.sdk.openadsdk.MediationPrivacyConfig
 @AndroidEntryPoint
 class MainActivity : GeoActivity(),
     HomeFragment.Callback,
@@ -189,6 +192,8 @@ class MainActivity : GeoActivity(),
 
         super.onCreate(savedInstanceState)
 
+        initMediationAdSdk(this)
+
         if (isLaunch) {
             Migrations.upgrade(applicationContext)
         }
@@ -202,10 +207,6 @@ class MainActivity : GeoActivity(),
         // 初始化 mSplashContainer
         mSplashContainer = findViewById(R.id.splash_container)
 
-        // 初始化 SDK
-        val adNativeLoader = TTAdSdk.getAdManager().createAdNative(this)
-
-        loadSplashAd(adNativeLoader)
 
         // 初始化Mobile Ads SDK
         MobileAds.initialize(this) { }
@@ -299,27 +300,105 @@ class MainActivity : GeoActivity(),
             return f?.snackbarContainer ?: super.snackbarContainer
         }
 
-    private fun loadSplashAd(adNativeLoader: TTAdNative) {
+
+    //初始化聚合sdk
+    private fun initMediationAdSdk(context: Context) {
+        TTAdSdk.init(context, buildConfig(context))
+        TTAdSdk.start(object : TTAdSdk.Callback {
+            override fun success() {
+                //初始化成功
+                //在初始化成功回调之后进行广告加载
+                loadSplashAd(context)
+            }
+
+            override fun fail(code: Int, msg: String?) {
+                //初始化失败
+            }
+        })
+    }
+
+    // 构造TTAdConfig
+    private fun buildConfig(context: Context): TTAdConfig {
+        return TTAdConfig.Builder()
+            .appId("5585238") //APP ID
+            .appName("彩云天气Pro") //APP Name
+            .useMediation(true)  //开启聚合功能
+            .debug(false)  //关闭debug开关
+            .themeStatus(0)  //正常模式  0是正常模式；1是夜间模式；
+            /**
+             * 多进程增加注释说明：V>=5.1.6.0支持多进程，如需开启可在初始化时设置.supportMultiProcess(true) ，默认false；
+             * 注意：开启多进程开关时需要将ADN的多进程也开启，否则广告展示异常，影响收益。
+             * CSJ、gdt无需额外设置，KS、baidu、Sigmob、Mintegral需要在清单文件中配置各家ADN激励全屏xxxActivity属性android:multiprocess="true"
+             */
+            .supportMultiProcess(false)  //不支持
+            .customController(getTTCustomController())  //设置隐私权
+            .build()
+    }
+    //设置隐私合规
+    private fun getTTCustomController(): TTCustomController? {
+        return object : TTCustomController() {
+            override fun isCanUseLocation(): Boolean {  //是否授权位置权限
+                return true
+            }
+
+            override fun isCanUsePhoneState(): Boolean {  //是否授权手机信息权限
+                return true
+            }
+
+            override fun isCanUseWifiState(): Boolean {  //是否授权wifi state权限
+                return true
+            }
+
+            override fun isCanUseWriteExternal(): Boolean {  //是否授权写外部存储权限
+                return true
+            }
+
+            override fun isCanUseAndroidId(): Boolean {  //是否授权Android Id权限
+                return true
+            }
+
+//            override fun getMediationPrivacyConfig(): MediationPrivacyConfig? {
+//                return object : MediationPrivacyConfig() {
+//                    override fun isLimitPersonalAds(): Boolean {  //是否限制个性化广告
+//                        return false
+//                    }
+//
+//                    override fun isProgrammaticRecommend(): Boolean {  //是否开启程序化广告推荐
+//                        return true
+//                    }
+//                }
+//            }
+        }
+    }
+
+
+
+    private fun loadSplashAd(context: Context) {
+        val adNativeLoader = TTAdSdk.getAdManager().createAdNative(this)
         val adSlot = AdSlot.Builder()
-            .setCodeId("103046686")
+            .setCodeId("889701539") // 确保这里的ID是正确的
             .setImageAcceptedSize(200, 500) // 单位px
             .build()
 
         adNativeLoader.loadSplashAd(adSlot, object : TTAdNative.CSJSplashAdListener {
             override fun onSplashRenderSuccess(csjSplashAd: CSJSplashAd) {
-                // 渲染成功后，展示广告
-                showSplashAd(csjSplashAd)
+                // 处理广告渲染成功
+                Log.d("处理广告渲染成功", "Splash ad render successfully.")
             }
             override fun onSplashLoadSuccess(csjSplashAd: CSJSplashAd) {
-            // 广告加载成功的逻辑
-            }
-            override fun onSplashLoadFail(csjAdError: CSJAdError) {
-                // 广告加载失败
+                Log.d("处理广告渲染成功", "Splash ad loaded successfully.")
+                showSplashAd(csjSplashAd)
             }
 
-            override fun onSplashRenderFail(csjSplashAd: CSJSplashAd, csjAdError: CSJAdError) {
-                // 广告渲染失败
+            override fun onSplashLoadFail(csjAdError: CSJAdError) {
+                Log.e("处理广告渲染失败", "Splash ad load failed: ${csjAdError.getMsg()}")
             }
+            override fun onSplashRenderFail(csjSplashAd: CSJSplashAd, csjAdError: CSJAdError) {
+                // 处理广告渲染失败
+                Log.e("处理广告渲染失败", "Splash ad render failed: ${csjAdError.getMsg()}")
+
+            }
+            // 其他回调...
         }, 3500)
     }
 
@@ -327,9 +406,11 @@ class MainActivity : GeoActivity(),
         // 展示广告的逻辑
         csjSplashAd.setSplashAdListener(object : CSJSplashAd.SplashAdListener {
             override fun onSplashAdShow(csjSplashAd: CSJSplashAd) {
+                Log.d("AdLoad", "Splash ad is shown.")
             }
 
             override fun onSplashAdClick(csjSplashAd: CSJSplashAd) {
+                Log.d("AdLoad", "Splash ad is clicked.")
             }
 
             override fun onSplashAdClose(csjSplashAd: CSJSplashAd, i: Int) {
@@ -337,10 +418,16 @@ class MainActivity : GeoActivity(),
                 finish()
             }
         })
+       // 获取广告视图并添加到容器中
         val splashView = csjSplashAd.splashView
-        ADUIUtils.removeFromParent(splashView)
-        mSplashContainer.removeAllViews()
-        mSplashContainer.addView(splashView)
+        if (splashView != null) {
+        // 确保容器已清空
+            mSplashContainer.removeAllViews()
+        // 将广告视图添加到容器中
+            mSplashContainer.addView(splashView)
+        } else {
+            Log.e("AdLoad", "Splash ad view is null.")
+        }
     }
 
     // init.
