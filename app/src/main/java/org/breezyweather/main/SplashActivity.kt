@@ -18,13 +18,11 @@ package org.breezyweather.main
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import androidx.compose.material3.AlertDialog
@@ -45,17 +43,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import breezyweather.domain.location.model.Location
 import com.bytedance.sdk.openadsdk.AdSlot
+import com.bytedance.sdk.openadsdk.CSJAdError
 import com.bytedance.sdk.openadsdk.CSJSplashAd
-import com.bytedance.sdk.openadsdk.TTAdConfig
-import com.bytedance.sdk.openadsdk.TTAdConstant
 import com.bytedance.sdk.openadsdk.TTAdNative
+import com.bytedance.sdk.openadsdk.TTAdNative.CSJSplashAdListener
 import com.bytedance.sdk.openadsdk.TTAdSdk
-import com.bytedance.sdk.openadsdk.TTAppDownloadListener
-import com.bytedance.sdk.openadsdk.TTCustomController
-import com.bytedance.sdk.openadsdk.TTSplashAd
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.MobileAds
+import com.bytedance.sdk.openadsdk.TTAdConfig
+import com.google.android.ads.mediationtestsuite.utils.UIUtils
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,17 +71,20 @@ import org.breezyweather.main.fragments.HomeFragment
 import org.breezyweather.main.fragments.ManagementFragment
 import org.breezyweather.main.fragments.ModifyMainSystemBarMessage
 import org.breezyweather.main.fragments.PushedManagementFragment
-import org.breezyweather.main.utils.ADUIUtils
 import org.breezyweather.main.utils.MainThemeColorProvider
-import org.breezyweather.main.utils.TToast.show
 import org.breezyweather.search.SearchActivity
 import org.breezyweather.settings.SettingsChangedMessage
 import org.breezyweather.sources.SourceManager
 import org.breezyweather.theme.compose.BreezyWeatherTheme
 import org.breezyweather.theme.compose.DayNightTheme
 import javax.inject.Inject
-
-
+import org.breezyweather.main.utils.ADUIUtils
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import android.util.Log
+import android.content.Context
+import com.bytedance.sdk.openadsdk.TTCustomController
 //import com.bytedance.sdk.openadsdk.MediationPrivacyConfig
 @AndroidEntryPoint
 class MainActivity : GeoActivity(),
@@ -105,14 +102,6 @@ class MainActivity : GeoActivity(),
 
     companion object {
         const val SEARCH_ACTIVITY = 4
-
-        private val mTTAdNative: TTAdNative? = null
-        private val mSplashContainer: FrameLayout? = null
-
-        const val AD_TIME_OUT: Int = 3000
-        private const val mCodeId = "103046686" //开屏广告代码位id
-        private const val mIsExpress = false //是否请求模板广告
-        private const val mIsHalfSize = false
 
         const val ACTION_MAIN = "org.breezyweather.Main"
         const val KEY_MAIN_ACTIVITY_LOCATION_FORMATTED_ID = "MAIN_ACTIVITY_LOCATION_FORMATTED_ID"
@@ -321,6 +310,7 @@ class MainActivity : GeoActivity(),
                 //在初始化成功回调之后进行广告加载
                 loadSplashAd(context)
             }
+
             override fun fail(code: Int, msg: String?) {
                 //初始化失败
                 Log.d("初始化失败", "Splash  UNsuccessfully."+msg)
@@ -383,103 +373,35 @@ class MainActivity : GeoActivity(),
     }
 
 
-    /**
-     * 跳转到主页面
-     */
-    private fun goToMainActivity() {
-//        val intent = Intent(
-//            this@SplashActivity,
-//            MainActivity::class.java
-//        )
-//        startActivity(intent)
-//        mSplashContainer.removeAllViews() //移除所有视图
-        this.finish()
-    }
 
-    private fun showToast(msg: String) {
-        show(this, msg)
-    }
-
-    /**
-     * 隐藏虚拟按键，并且全屏
-     */
-    protected fun hideBottomUIMenu() {
-        //隐藏虚拟按键，并且全屏
-        if (Build.VERSION.SDK_INT > 11 && Build.VERSION.SDK_INT < 19) { // lower api
-            val v = this.window.decorView
-            v.systemUiVisibility = View.GONE
-        } else if (Build.VERSION.SDK_INT >= 19) {
-            //for new api versions.
-            val decorView = window.decorView
-            val uiOptions = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_FULLSCREEN)
-            decorView.systemUiVisibility = uiOptions
-        }
-    }
-    fun buildSplashAdslot(): AdSlot {
-        var adSlot: AdSlot? = null
-        val splashWidthDp: Float = ADUIUtils.getScreenWidthDp(this)
-        val splashWidthPx: Int = ADUIUtils.getScreenWidthInPx(this)
-        val screenHeightPx: Int = ADUIUtils.getScreenHeight(this)
-        val screenHeightDp: Float = ADUIUtils.px2dip(this, screenHeightPx.toFloat()).toFloat()
-        val splashHeightDp: Float
-        val splashHeightPx: Int
-        if (mIsHalfSize) {
-            // 开屏高度 = 屏幕高度 - 下方预留的高度，demo中是预留了屏幕高度的1/5，因此开屏高度传入 屏幕高度*4/5
-            splashHeightDp = screenHeightDp * 4 / 5f
-            splashHeightPx = (screenHeightPx * 4 / 5f).toInt()
-        } else {
-            splashHeightDp = screenHeightDp
-            splashHeightPx = screenHeightPx
-        }
-        adSlot = if (mIsExpress) {
-            //个性化模板广告需要传入期望广告view的宽、高，单位dp，请传入实际需要的大小，
-            //比如：广告下方拼接logo、适配刘海屏等，需要考虑实际广告大小
-            //            float expressViewWidth = UIUtils.getScreenWidthDp(this);
-            //            float expressViewHeight = UIUtils.getHeight(this);
-            return AdSlot.Builder()
-                .setCodeId(mCodeId)
-                .setSupportDeepLink(true)
-                .setImageAcceptedSize(
-                    splashWidthPx,
-                    splashHeightPx
-                ) //模板广告需要设置期望个性化模板广告的大小,单位dp,代码位是否属于个性化模板广告，请在穿山甲平台查看
-                .setExpressViewAcceptedSize(splashWidthDp, splashHeightDp)
-                .build()
-        } else {
-            return AdSlot.Builder()
-                .setCodeId(mCodeId)
-                .setSupportDeepLink(true)
-                .setImageAcceptedSize(splashWidthPx, splashHeightPx)
-                .build()
-        }
-    }
     private fun loadSplashAd(context: Context) {
-        val adNativeLoader = TTAdSdk.getAdManager().createAdNative(context)
-        adNativeLoader.loadSplashAd(buildSplashAdslot(), object : TTAdNative.CSJSplashAdListener {
-            override fun onSplashLoadSuccess(p0: CSJSplashAd?) {
-                //广告加载成功
+        val adNativeLoader = TTAdSdk.getAdManager().createAdNative(this)
+        val adSlot = AdSlot.Builder()
+            .setCodeId("889701539") // 确保这里的ID是正确的
+            .setImageAcceptedSize(200, 500) // 单位px
+            .build()
+
+        adNativeLoader.loadSplashAd(adSlot, object : TTAdNative.CSJSplashAdListener {
+            override fun onSplashRenderSuccess(csjSplashAd: CSJSplashAd) {
+                // 处理广告渲染成功
+                Log.d("处理广告渲染成功", "Splash ad render successfully.")
+            }
+            override fun onSplashLoadSuccess(csjSplashAd: CSJSplashAd) {
+                Log.d("处理广告渲染成功", "Splash ad loaded successfully.")
+                showSplashAd(csjSplashAd)
             }
 
-            override fun onSplashLoadFail(error: CSJAdError?) {
-                //广告加载失败
+            override fun onSplashLoadFail(csjAdError: CSJAdError) {
+                Log.e("处理广告渲染失败", "Splash ad load failed: ${csjAdError.getMsg()}")
             }
+            override fun onSplashRenderFail(csjSplashAd: CSJSplashAd, csjAdError: CSJAdError) {
+                // 处理广告渲染失败
+                Log.e("处理广告渲染失败", "Splash ad render failed: ${csjAdError.getMsg()}")
 
-            override fun onSplashRenderSuccess(csjSplashAd: CSJSplashAd?) {
-                //广告渲染成功，在此展示广告
-                if (csjSplashAd != null) {
-                    showSplashAd(csjSplashAd, adView); //注 ：splashContainer为展示Banner广告的容器
-                }; //注 ：splashContainer为展示Banner广告的容器
             }
-
-            override fun onSplashRenderFail(p0: CSJSplashAd?, p1: CSJAdError?) {
-                //广告渲染失败
-            }
-        }, AD_TIME_OUT)
+            // 其他回调...
+        }, 3500)
     }
-
-
-
 
     private fun showSplashAd(csjSplashAd: CSJSplashAd) {
         // 展示广告的逻辑

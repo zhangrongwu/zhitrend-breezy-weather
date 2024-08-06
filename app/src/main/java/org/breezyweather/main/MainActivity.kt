@@ -45,6 +45,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import breezyweather.domain.location.model.Location
 import com.bytedance.sdk.openadsdk.AdSlot
+import com.bytedance.sdk.openadsdk.CSJAdError
 import com.bytedance.sdk.openadsdk.CSJSplashAd
 import com.bytedance.sdk.openadsdk.TTAdConfig
 import com.bytedance.sdk.openadsdk.TTAdConstant
@@ -455,25 +456,24 @@ class MainActivity : GeoActivity(),
         }
     }
     private fun loadSplashAd(context: Context) {
-        val adNativeLoader = TTAdSdk.getAdManager().createAdNative(context)
+        val adNativeLoader = TTAdSdk.getAdManager().createAdNative(this)
         adNativeLoader.loadSplashAd(buildSplashAdslot(), object : TTAdNative.CSJSplashAdListener {
-            override fun onSplashLoadSuccess(p0: CSJSplashAd?) {
-                //广告加载成功
+            override fun onSplashRenderSuccess(csjSplashAd: CSJSplashAd) {
+                // 处理广告渲染成功
+                Log.d("处理广告渲染成功", "Splash ad render successfully.")
+            }
+            override fun onSplashLoadSuccess(csjSplashAd: CSJSplashAd) {
+                Log.d("处理广告渲染成功", "Splash ad loaded successfully.")
+                showSplashAd(csjSplashAd)
             }
 
-            override fun onSplashLoadFail(error: CSJAdError?) {
-                //广告加载失败
+            override fun onSplashLoadFail(csjAdError: CSJAdError) {
+                Log.e("处理广告渲染失败", "Splash ad load failed: ${csjAdError.getMsg()}")
             }
+            override fun onSplashRenderFail(csjSplashAd: CSJSplashAd, csjAdError: CSJAdError) {
+                // 处理广告渲染失败
+                Log.e("处理广告渲染失败", "Splash ad render failed: ${csjAdError.getMsg()}")
 
-            override fun onSplashRenderSuccess(csjSplashAd: CSJSplashAd?) {
-                //广告渲染成功，在此展示广告
-                if (csjSplashAd != null) {
-                    showSplashAd(csjSplashAd, adView); //注 ：splashContainer为展示Banner广告的容器
-                }; //注 ：splashContainer为展示Banner广告的容器
-            }
-
-            override fun onSplashRenderFail(p0: CSJSplashAd?, p1: CSJAdError?) {
-                //广告渲染失败
             }
         }, AD_TIME_OUT)
     }
