@@ -256,7 +256,6 @@ dependencies {
 //    implementation(files("libs/GDTSDK.unionNormal.4.575.1445.aar"))
 
     implementation("com.google.android.gms:play-services-ads:20.5.0") // 请检查最新版本
-//    implementation("com.bytedance.sdk.openadsdk:ttad-sdk:最新版本")
 
 }
 
