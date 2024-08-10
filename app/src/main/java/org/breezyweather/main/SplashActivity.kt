@@ -27,19 +27,15 @@ import com.bytedance.sdk.openadsdk.AdSlot
 import com.bytedance.sdk.openadsdk.CSJAdError
 import com.bytedance.sdk.openadsdk.CSJSplashAd
 import com.bytedance.sdk.openadsdk.TTAdConfig
-import com.bytedance.sdk.openadsdk.TTAdConstant
 import com.bytedance.sdk.openadsdk.TTAdNative
 import com.bytedance.sdk.openadsdk.TTAdSdk
-import com.bytedance.sdk.openadsdk.TTAppDownloadListener
 import com.bytedance.sdk.openadsdk.TTCustomController
-import com.bytedance.sdk.openadsdk.TTSplashAd
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
-import org.breezyweather.Migrations
 import org.breezyweather.R
 import org.breezyweather.common.basic.GeoActivity
-import org.breezyweather.databinding.ActivityMainBinding
+import org.breezyweather.databinding.ActivitySplashBinding // 确保导入正确
 import org.breezyweather.main.utils.ADUIUtils
 import org.breezyweather.main.utils.TToast.show
 import javax.inject.Inject
@@ -47,12 +43,13 @@ import javax.inject.Inject
 class SplashActivity : GeoActivity() {
 
     @Inject
-    internal lateinit var binding: ActivityMainBinding
+    internal lateinit var binding: ActivitySplashBinding // 使用 ActivitySplashBinding
 
     companion object {
         const val AD_TIME_OUT: Int = 3000
         private const val mCodeId = "103046686" //开屏广告代码位id
         private const val mIsExpress = false //是否请求模板广告
+
         private const val mIsHalfSize = false
     }
 
@@ -61,17 +58,17 @@ class SplashActivity : GeoActivity() {
     private lateinit var adView: AdView
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        val isLaunch = savedInstanceState == null
+//        val isLaunch = savedInstanceState == null
 
         super.onCreate(savedInstanceState)
 
         initMediationAdSdk(this)
 
-        if (isLaunch) {
-            Migrations.upgrade(applicationContext)
-        }
+//        if (isLaunch) {
+//            Migrations.upgrade(applicationContext)
+//        }
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivitySplashBinding.inflate(layoutInflater)
 
         setContentView(binding.root)
 
@@ -232,12 +229,16 @@ class SplashActivity : GeoActivity() {
         }
     }
     private fun loadSplashAd(context: Context) {
-        val adNativeLoader = TTAdSdk.getAdManager().createAdNative(this)
+        try {
+
+            val adNativeLoader = TTAdSdk.getAdManager().createAdNative(this)
+
         adNativeLoader.loadSplashAd(buildSplashAdslot(), object : TTAdNative.CSJSplashAdListener {
             override fun onSplashRenderSuccess(csjSplashAd: CSJSplashAd) {
                 // 处理广告渲染成功
                 Log.d("处理广告渲染成功", "Splash ad render successfully.")
             }
+
             override fun onSplashLoadSuccess(csjSplashAd: CSJSplashAd) {
                 Log.d("处理广告渲染成功", "Splash ad loaded successfully.")
                 showSplashAd(csjSplashAd)
@@ -246,12 +247,17 @@ class SplashActivity : GeoActivity() {
             override fun onSplashLoadFail(csjAdError: CSJAdError) {
                 Log.e("处理广告渲染失败", "Splash ad load failed: ${csjAdError.getMsg()}")
             }
+
             override fun onSplashRenderFail(csjSplashAd: CSJSplashAd, csjAdError: CSJAdError) {
                 // 处理广告渲染失败
                 Log.e("处理广告渲染失败", "Splash ad render failed: ${csjAdError.getMsg()}")
 
             }
+
         }, AD_TIME_OUT)
+        } catch (e: Exception) {
+            Log.e("AdLoad", "Error loading splash ad: ${e.message}")
+        }
     }
 
     private fun showSplashAd(csjSplashAd: CSJSplashAd) {

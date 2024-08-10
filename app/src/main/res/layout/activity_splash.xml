@@ -1,36 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/container"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+android:layout_height="match_parent">
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/fragment"
-        android:name="org.breezyweather.main.fragments.HomeFragment"
-        android:tag="fragment_main"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:ignore="UnusedAttribute" />
+<!-- 广告容器 -->
+<FrameLayout
+    android:id="@+id/splash_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_centerInParent="true" />
 
-    <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/per_location_settings"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-    <!-- 添加 mSplashContainer -->
-    <FrameLayout
-        android:id="@+id/splash_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+<!-- 广告视图 -->
+<com.google.android.gms.ads.AdView
+    android:id="@+id/adView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_marginBottom="16dp"
+    android:visibility="gone"
+    android:layout_gravity="center"
+    app:adSize="BANNER"
+    app:adUnitId="ca-app-pub-6634510924430346/2444477425"
 
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        app:adSize="BANNER"
-        app:adUnitId="ca-app-pub-6634510924430346/2444477425"/>
+    /> <!-- 初始隐藏，视需要而定 -->
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</RelativeLayout>
