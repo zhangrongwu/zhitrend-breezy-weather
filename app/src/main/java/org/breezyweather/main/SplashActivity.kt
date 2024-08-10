@@ -16,12 +16,8 @@
 
 package org.breezyweather.main
 
-import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -40,86 +36,31 @@ import com.bytedance.sdk.openadsdk.TTSplashAd
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import org.breezyweather.Migrations
 import org.breezyweather.R
 import org.breezyweather.common.basic.GeoActivity
-import org.breezyweather.common.bus.EventBus
-import org.breezyweather.common.extensions.hasPermission
-import org.breezyweather.common.extensions.isDarkMode
-import org.breezyweather.common.snackbar.SnackbarContainer
-import org.breezyweather.common.ui.composables.AlertDialogNoPadding
-import org.breezyweather.common.ui.composables.LocationPreference
-import org.breezyweather.common.utils.helpers.IntentHelper
-import org.breezyweather.common.utils.helpers.SnackbarHelper
 import org.breezyweather.databinding.ActivityMainBinding
-import org.breezyweather.main.fragments.HomeFragment
-import org.breezyweather.main.fragments.ManagementFragment
-import org.breezyweather.main.fragments.ModifyMainSystemBarMessage
-import org.breezyweather.main.fragments.PushedManagementFragment
 import org.breezyweather.main.utils.ADUIUtils
-import org.breezyweather.main.utils.MainThemeColorProvider
 import org.breezyweather.main.utils.TToast.show
-import org.breezyweather.search.SearchActivity
-import org.breezyweather.settings.SettingsChangedMessage
-import org.breezyweather.sources.SourceManager
-import org.breezyweather.theme.compose.BreezyWeatherTheme
-import org.breezyweather.theme.compose.DayNightTheme
 import javax.inject.Inject
 
-
-//import com.bytedance.sdk.openadsdk.MediationPrivacyConfig
-@AndroidEntryPoint
-class SplashActivity : GeoActivity(),
-    HomeFragment.Callback,
-    ManagementFragment.Callback {
+class SplashActivity : GeoActivity() {
 
     @Inject
-    lateinit var sourceManager: SourceManager
-
-    private lateinit var binding: ActivityMainBinding
-//    private lateinit var viewModel: MainActivityViewModel
-
-    private val _dialogPerLocationSettingsOpen = MutableStateFlow(false)
-    val dialogPerLocationSettingsOpen = _dialogPerLocationSettingsOpen.asStateFlow()
-    override fun onManageIconClicked() {
-        // 实现你的逻辑
-        // 例如，打开管理界面
-    }
+    internal lateinit var binding: ActivityMainBinding
 
     companion object {
-        const val SEARCH_ACTIVITY = 4
-
-        private val mTTAdNative: TTAdNative? = null
-        private val mSplashContainer: FrameLayout? = null
-
         const val AD_TIME_OUT: Int = 3000
         private const val mCodeId = "103046686" //开屏广告代码位id
         private const val mIsExpress = false //是否请求模板广告
         private const val mIsHalfSize = false
-
-        const val ACTION_MAIN = "org.breezyweather.Main"
-        const val KEY_MAIN_ACTIVITY_LOCATION_FORMATTED_ID = "MAIN_ACTIVITY_LOCATION_FORMATTED_ID"
-        const val KEY_MAIN_ACTIVITY_ALERT_ID = "MAIN_ACTIVITY_ALERT_ID"
-
-        const val ACTION_MANAGEMENT = "org.breezyweather.ACTION_MANAGEMENT"
-        const val ACTION_SHOW_ALERTS = "org.breezyweather.ACTION_SHOW_ALERTS"
-
-        const val ACTION_SHOW_DAILY_FORECAST = "org.breezyweather.ACTION_SHOW_DAILY_FORECAST"
-        const val KEY_DAILY_INDEX = "DAILY_INDEX"
-
-        private const val TAG_FRAGMENT_HOME = "fragment_main"
-        private const val TAG_FRAGMENT_MANAGEMENT = "fragment_management"
     }
 
 
     private lateinit var mSplashContainer: FrameLayout
     private lateinit var adView: AdView
     override fun onCreate(savedInstanceState: Bundle?) {
+
         val isLaunch = savedInstanceState == null
 
         super.onCreate(savedInstanceState)
@@ -144,16 +85,6 @@ class SplashActivity : GeoActivity(),
         adView = findViewById(R.id.adView)
         val adRequest = AdRequest.Builder().build()
         adView.loadAd(adRequest)
-    }
-
-
-
-    override fun onActivityReenter(resultCode: Int, data: Intent) {
-        super.onActivityReenter(resultCode, data)
-        if (resultCode == SEARCH_ACTIVITY) {
-            val f = findManagementFragment()
-            f?.prepareReenterTransition()
-        }
     }
 
 
@@ -239,7 +170,7 @@ class SplashActivity : GeoActivity(),
         )
         startActivity(intent)
         mSplashContainer.removeAllViews() //移除所有视图
-        this.finish()
+        finish()
     }
 
     private fun showToast(msg: String) {
@@ -337,7 +268,7 @@ class SplashActivity : GeoActivity(),
             override fun onSplashAdClose(csjSplashAd: CSJSplashAd, i: Int) {
                 // 广告关闭后，销毁广告页面
 //                finish()
-//                goToMainActivity()
+                goToMainActivity()
             }
         })
         // 获取广告视图并添加到容器中
@@ -350,45 +281,5 @@ class SplashActivity : GeoActivity(),
         } else {
             Log.e("AdLoad", "Splash ad view is null.")
         }
-    }
-
-
-    private fun getLocationId(intent: Intent?): String? {
-        return intent?.getStringExtra(KEY_MAIN_ACTIVITY_LOCATION_FORMATTED_ID)
-    }
-
-
-
-    private fun findHomeFragment(): HomeFragment? {
-        return if (binding.drawerLayout == null) {
-            supportFragmentManager.findFragmentByTag(TAG_FRAGMENT_HOME) as HomeFragment?
-        } else {
-            supportFragmentManager.findFragmentById(R.id.fragment_home) as HomeFragment?
-        }
-    }
-
-    private fun findManagementFragment(): ManagementFragment? {
-        return if (binding.drawerLayout == null) {
-            supportFragmentManager.findFragmentByTag(TAG_FRAGMENT_MANAGEMENT) as ManagementFragment?
-        } else {
-            supportFragmentManager.findFragmentById(R.id.fragment_drawer) as ManagementFragment?
-        }
-    }
-
-    // interface.
-
-    // main fragment callback.
-    override fun onEditIconClicked() {
-        _dialogPerLocationSettingsOpen.value = true
-    }
-
-    override fun onSettingsIconClicked() {
-        IntentHelper.startSettingsActivity(this)
-    }
-
-    // management fragment callback.
-
-    override fun onSearchBarClicked() {
-        IntentHelper.startSearchActivityForResult(this, SEARCH_ACTIVITY)
     }
 }
